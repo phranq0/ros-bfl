@@ -62,9 +62,10 @@ namespace BFL
 
     // create matrix _meas_model for linear measurement model
     double wall_ct = 2/(sqrt(pow(RICO_WALL,2.0) + 1));
-	Matrix H(MEAS_SIZE,STATE_SIZE);
+	  Matrix H(MEAS_SIZE,STATE_SIZE);
     H = 0.0;
     H(1,1) = wall_ct * RICO_WALL;
+    //H(1,2) = wall_ct * RICO_WALL;
     H(1,2) = 0 - wall_ct;
     H(1,3) = 0.0;
 

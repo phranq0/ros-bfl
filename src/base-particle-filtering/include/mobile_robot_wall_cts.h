@@ -23,19 +23,19 @@
 
 // To use measurements specify 1
 // To do deadreckoning (no measurements) specify 0
-#define USE_MEASUREMENTS 0
+#define USE_MEASUREMENTS 1
 
 #define DELTA_T 1	        // Delta t (for discretisation)
 #define NUM_TIME_STEPS 101  // Number of steps that  simulation is running
 
 // Coordinates of wall to which distance is measured
-#define RICO_WALL 0.0
+#define RICO_WALL 0.3
 #define OFFSET_WALL (0)//100
 
 // Sizes
 #define STATE_SIZE 3 //state: x,y,theta
 #define INPUT_SIZE 2 //input: v*deltat, omega*deltat
-#define MEAS_SIZE 1  //USmeasurment: distance_to_wall
+#define MEAS_SIZE 2  //measurment: x and y from noisy gps-like
 
 //Initial position and orientation of the mobile robot
 #define X_0 0
@@ -44,7 +44,7 @@
 
 // Velocity send to the robot, in this case constant for the whole simulation
 #define LIN_SPEED  0.1  //translational velocity: v
-#define ROT_SPEED 0     //rotational velocity: omega
+#define ROT_SPEED 0.002     //rotational velocity: omega
 
 #define NUM_SAMPLES 1000 // Default Number of Samples
 #define RESAMPLE_PERIOD 0 // Default Resample Period
@@ -52,12 +52,12 @@
 
 // Prior:
 // Initial estimate of position and orientation
-#define PRIOR_MU_X -0.1
+#define PRIOR_MU_X 0.1
 #define PRIOR_MU_Y 0.1
 #define PRIOR_MU_THETA M_PI/4	//M_PI/4
 // Initial covariances of position and orientation
-#define PRIOR_COV_X pow(0.2,2)
-#define PRIOR_COV_Y pow(0.2,2)
+#define PRIOR_COV_X pow(0.4,2)
+#define PRIOR_COV_Y pow(0.4,2)
 #define PRIOR_COV_THETA pow(M_PI/8,2)
 
 // FOR MIXTURE
@@ -107,16 +107,16 @@
 #define MU_SYSTEM_NOISE_X_ROB 0.0 
 #define MU_SYSTEM_NOISE_Y_ROB 0.0 
 #define MU_SYSTEM_NOISE_THETA_ROB 0.0
-#define SIGMA_SYSTEM_NOISE_X_ROB pow(0.001,2)
-#define SIGMA_SYSTEM_NOISE_Y_ROB pow(0.001,2)
-#define SIGMA_SYSTEM_NOISE_THETA_ROB pow(0.1*M_PI/180,2)
+#define SIGMA_SYSTEM_NOISE_X_ROB pow(0.01,2)
+#define SIGMA_SYSTEM_NOISE_Y_ROB pow(0.01,2)
+#define SIGMA_SYSTEM_NOISE_THETA_ROB pow(0.2*M_PI/180,2)
 
 // System Noise for simulation
 #define SIM_FACTOR 1000 //The system covariance in simulation is SIM_FACTOR
                         //smaller than the system covariance of the systemmodel
 
 // Measurement noise
-#define SIGMA_MEAS_NOISE pow(0.05,2)
+#define SIGMA_MEAS_NOISE pow(0.5,2)
 #define MU_MEAS_NOISE 0.0
 
 // Measurement noise for mobile robot simulator 
