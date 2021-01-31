@@ -57,6 +57,7 @@ include_directories(
 # Executables
 add_executable(pf_mobile_node src/node_wall_pf.cpp src/nonlinearSystemPdf.cpp src/nonlinearMeasurementPdf.cpp src/mobile_robot.cpp src/nonlinearanalyticconditionalgaussianmobile.cpp src/customParticleFilter.cpp)
 add_executable(pf_fullstate_mobile_node src/node_fullState_pf.cpp src/nonlinearSystemPdf.cpp src/stateMeasurementPdf.cpp src/mobile_robot_fullstate.cpp src/nonlinearanalyticconditionalgaussianmobile.cpp src/customParticleFilter.cpp)
+add_executable(pf_fullstate_planaragent_node src/node_planaragent_pf.cpp src/planarSystemPdf.cpp src/stateMeasurementPdf.cpp src/planar_agent.cpp src/planaragentconditionalgaussian.cpp src/customParticleFilter.cpp)
 
 # Libraries to be linked to executables
 target_link_libraries(pf_mobile_node
@@ -68,6 +69,15 @@ target_link_libraries(pf_mobile_node
   Eigen3::Eigen
 )
 target_link_libraries(pf_fullstate_mobile_node
+  ${catkin_LIBRARIES}
+  orocos-bfl 
+  ${MATRIX_LIBS} 
+  ${RNG_LIBS}  
+  ${GINAC_LIBS}
+  Eigen3::Eigen
+)
+
+target_link_libraries(pf_fullstate_planaragent_node
   ${catkin_LIBRARIES}
   orocos-bfl 
   ${MATRIX_LIBS} 
