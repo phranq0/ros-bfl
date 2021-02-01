@@ -1,8 +1,7 @@
-// This class represents a simulated planar agent, which behaves as an holonomic vehicle
-// This implies the motion model to be linear instead of the sin/cos dependent classical unicycle model
-
-#ifndef PLANAR_AGENT_HPP
-#define PLANAR_AGENT_HPP
+// This class represents a simulated 3D spatial agent, which behaves as an holonomic point
+// Motion model is linear, its pose is described by a 6D state vector
+#ifndef SPATIAL_AGENT_HPP
+#define SPATIAL_AGENT_HPP
 
 
 #include <model/analyticsystemmodel_gaussianuncertainty.h>
@@ -11,25 +10,24 @@
 #include <wrappers/matrix/matrix_wrapper.h>
 #include <wrappers/matrix/vector_wrapper.h>
 
-#include "mobile_robot_wall_cts.h"
-#include "planaragentconditionalgaussian.h"
+#include "spatial_agent_params.h"
+#include "spatialagentconditionalgaussian.h"
 
 
 namespace BFL{
 
-/** The state of the planar agent is represented with a ColumnVector of three
-* elements: the x and y position and the orientation. 
+/** The state of the spatial agent is represented with a ColumnVector of six
+* elements: the x,y,z position and orientation about same axes (describes in euler angles) 
 * The inputs of the robot are the rates of change of each component.
 * Simulated measurements are handled directly in simulation loop
 */
      
-
-  class PlanarAgent
+  class SpatialAgent
     {
     public:
       // Constructor
-      PlanarAgent();
-      ~PlanarAgent();
+      SpatialAgent();
+      ~SpatialAgent();
 
       void Move(MatrixWrapper::ColumnVector inputs);
       const MatrixWrapper::ColumnVector Measure();
@@ -37,7 +35,7 @@ namespace BFL{
 
     private:
       Gaussian* _system_Uncertainty;
-      PlanarAgentConditionalGaussian* _sys_pdf; 
+      SpatialAgentConditionalGaussian* _sys_pdf; 
       AnalyticSystemModelGaussianUncertainty* _sys_model;
       Gaussian* _measurement_Uncertainty;
       LinearAnalyticConditionalGaussian* _meas_pdf;

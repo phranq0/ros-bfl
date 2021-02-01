@@ -1,3 +1,4 @@
+close all
 % 1 - (x,y) plot of trajectory
 figure,
 plot(robPos(:,1),robPos(:,2),'Linewidth',4);
@@ -20,6 +21,28 @@ hold on,
 plot(1:N,robCov(:,2),'Linewidth',4);
 hold on
 plot(1:N,robCov(:,3),'Linewidth',4);
+grid on,
+axis([-1 5 -1 1]);
+xlabel("Samples")
+ylabel("m")
+legend('\sigma^2_x','\sigma^2_y','\sigma^2_\theta');
+title('Covariance diagonal evolution');
+
+% 3 - Estimation over time
+N = length(robMeas);
+figure,
+% Ground truth
+plot(1:N,robPos(:,1),'Linewidth',4);
+hold on,
+plot(1:N,robPos(:,2),'Linewidth',4);
+hold on
+plot(1:N,robPos(:,3),'Linewidth',4);
+hold on
+plot(1:N,robEst(:,1),'Linewidth',4);
+hold on,
+plot(1:N,robEst(:,2),'Linewidth',4);
+hold on
+plot(1:N,robEst(:,3),'Linewidth',4);
 grid on,
 axis([-1 5 -1 1]);
 xlabel("Samples")

@@ -27,10 +27,11 @@ namespace BFL
         ColumnVector state = ConditionalArgumentGet(0);
 
         // Compute expected measurement for the current particle
-        ColumnVector expected_measurement(2);
-        ColumnVector distance(2);
+        ColumnVector expected_measurement(3);
+        ColumnVector distance(3);
         expected_measurement(1) = state(1);
         expected_measurement(2) = state(2);
+        expected_measurement(3) = state(3);
 
         // Compute distance between simulated and real measurements
         distance = expected_measurement - measurement;

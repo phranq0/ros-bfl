@@ -1,16 +1,16 @@
 // This class represents the conditional probability P(x(t)|x(t-1),u(t)) for 
-// the planar agent entity
+// the spatial agent entity
 // The motion model here is linear 
 
-#ifndef __PLANAR_AGENT_CONDITIONAL_GAUSSIAN__
-#define __PLANAR_AGENT_CONDITIONAL_GAUSSIAN__
+#ifndef __SPATIAL_AGENT_CONDITIONAL_GAUSSIAN__
+#define __SPATIAL_AGENT_CONDITIONAL_GAUSSIAN__
 
 #include <pdf/analyticconditionalgaussian_additivenoise.h>
 
 namespace BFL
 {
   
-  class PlanarAgentConditionalGaussian : public AnalyticConditionalGaussianAdditiveNoise
+  class SpatialAgentConditionalGaussian : public AnalyticConditionalGaussianAdditiveNoise
     {
     public:
       /// Constructor
@@ -23,10 +23,10 @@ namespace BFL
 	  and \f$\mu\f$
 	  @param additiveNoise Pdf representing the additive Gaussian uncertainty
       */
-      PlanarAgentConditionalGaussian( const Gaussian& additiveNoise);
+      SpatialAgentConditionalGaussian( const Gaussian& additiveNoise);
 
       /// Destructor
-      virtual ~PlanarAgentConditionalGaussian();
+      virtual ~SpatialAgentConditionalGaussian();
 
       // redefine virtual functions
       // Unlike the mobile robot, here no Jacobian is needed

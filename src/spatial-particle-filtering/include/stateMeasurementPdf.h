@@ -1,6 +1,8 @@
 // Header file which defines nonlinear probability density function (aka Measurement Model)
-// related to a point-shaped mobile robot, which is a conditional probability density defined as P(z(k)|x(k))
-// This model makes a direct confrontation on the state, computes the distance between measurement and (x,y) of each particle
+// related to a point-shaped mobile robot, which is a conditional probability density 
+// defined as P(z(k)|x(k))
+// This model makes a direct confrontation on the state, 
+// computes the distance between measurement and (x,y) of each particle
 
 #ifndef __STATE_MEAS_MOBILE__
 #define __STATE_MEAS_MOBILE__

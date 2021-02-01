@@ -25,10 +25,10 @@
 #include <model/measurementmodel.h>
 
 // Custom Bfl components
-#include "mobile_robot_wall_cts.h"
-#include "planarSystemPdf.h"
+#include "spatial_agent_params.h"
+#include "spatialSystemPdf.h"
 #include "stateMeasurementPdf.h"
-#include "planar_agent.h"
+#include "spatial_agent.h"
 
 // Angle conversions ecc...
 #include <Eigen/Geometry>
@@ -57,7 +57,7 @@ class ParticleFilterNode
     ros::Publisher particle_pub;
     ros::Publisher ground_truth_pub; 
     // Filter components
-    PlanarSystemPdf *sys_pdf;
+    SpatialSystemPdf *sys_pdf;
     SystemModel<ColumnVector> *sys_model;
     stateMeasurementPdf *meas_pdf;
     MeasurementModel<ColumnVector,ColumnVector> *meas_model;
@@ -106,27 +106,28 @@ class ParticleFilterNode
       ColumnVector sys_noise_Mu(STATE_SIZE);
       sys_noise_Mu(1) = MU_SYSTEM_NOISE_X;
       sys_noise_Mu(2) = MU_SYSTEM_NOISE_Y;
-      sys_noise_Mu(3) = MU_SYSTEM_NOISE_THETA;
-
+      sys_noise_Mu(3) = MU_SYSTEM_NOISE_Z;
+      sys_noise_Mu(4) = MU_SYSTEM_NOISE_ALPHA;
+      sys_noise_Mu(5) = MU_SYSTEM_NOISE_BETA;
+      sys_noise_Mu(6) = MU_SYSTEM_NOISE_GAMMA;
+      
       // Covariance matrix
+      // Initialize diagonal elements
       SymmetricMatrix sys_noise_Cov(STATE_SIZE);
       sys_noise_Cov = 0.0;
       sys_noise_Cov(1,1) = SIGMA_SYSTEM_NOISE_X;
-      sys_noise_Cov(1,2) = 0.0;
-      sys_noise_Cov(1,3) = 0.0;
-      sys_noise_Cov(2,1) = 0.0;
       sys_noise_Cov(2,2) = SIGMA_SYSTEM_NOISE_Y;
-      sys_noise_Cov(2,3) = 0.0;
-      sys_noise_Cov(3,1) = 0.0;
-      sys_noise_Cov(3,2) = 0.0;
-      sys_noise_Cov(3,3) = SIGMA_SYSTEM_NOISE_THETA;
-
+      sys_noise_Cov(3,3) = SIGMA_SYSTEM_NOISE_Z;
+      sys_noise_Cov(4,4) = SIGMA_SYSTEM_NOISE_ALPHA;
+      sys_noise_Cov(5,5) = SIGMA_SYSTEM_NOISE_BETA;
+      sys_noise_Cov(6,6) = SIGMA_SYSTEM_NOISE_GAMMA;
+      
       // Create the gaussian distribution
       Gaussian system_Uncertainty(sys_noise_Mu, sys_noise_Cov);
-
+      
       // Create the linear motion model 
       // P(x(k+1)|x(k),u(k)) (in this case u is constant)
-      sys_pdf = new PlanarSystemPdf(system_Uncertainty);    // TODO Change this 
+      sys_pdf = new SpatialSystemPdf(system_Uncertainty);   
       sys_model = new SystemModel<ColumnVector> (sys_pdf);
 
       // ----------------------------------------------------- Measurement Model
@@ -152,8 +153,12 @@ class ParticleFilterNode
       ColumnVector prior_Mu(STATE_SIZE);
       prior_Mu(1) = PRIOR_MU_X;
       prior_Mu(2) = PRIOR_MU_Y;
-      prior_Mu(3) = PRIOR_MU_THETA;
+      prior_Mu(3) = PRIOR_MU_Z;
+      prior_Mu(4) = PRIOR_MU_ALPHA;
+      prior_Mu(5) = PRIOR_MU_BETA;
+      prior_Mu(6) = PRIOR_MU_GAMMA;
       SymmetricMatrix prior_Cov(STATE_SIZE);
+      prior_Cov = 0.0;
       prior_Cov(1,1) = PRIOR_COV_X;
       prior_Cov(1,2) = 0.0;
       prior_Cov(1,3) = 0.0;
@@ -162,7 +167,7 @@ class ParticleFilterNode
       prior_Cov(2,3) = 0.0;
       prior_Cov(3,1) = 0.0;
       prior_Cov(3,2) = 0.0;
-      prior_Cov(3,3) = PRIOR_COV_THETA;
+      prior_Cov(3,3) = PRIOR_COV_Z;
       Gaussian prior_cont(prior_Mu,prior_Cov);
 
       // Discrete prior for Particle filter (using the continuous Gaussian prior)
@@ -173,7 +178,7 @@ class ParticleFilterNode
       prior_discr->ListOfSamplesSet(prior_samples);
 
       // ------------------------------ Instance of the filter
-      filter = new CustomParticleFilter(prior_discr, 0.75, NUM_SAMPLES/4.0);
+      filter = new CustomParticleFilter(prior_discr, 0.5, NUM_SAMPLES/4.0);
       
       // Start simulation loop
       RunSimulation();
@@ -209,11 +214,14 @@ class ParticleFilterNode
     void RunSimulation()
     {
         // Initialize mobile robot simulation
-        PlanarAgent planar_agent;
-        ColumnVector input(3);
-        input(1) = 0.005;
-        input(2) = 0.008;
-        input(3) = -0.003;
+        SpatialAgent spatial_agent;
+        ColumnVector input(6);
+        input(1) = 0;
+        input(2) = 0;
+        input(3) = 0;
+        input(4) = 0.0;
+        input(5) = 0.0;
+        input(6) = 0.0;
         unsigned int useconds = 10000;  // For pause
 
         // Saving for plots
@@ -229,17 +237,18 @@ class ParticleFilterNode
         unsigned int time_step;
         for (time_step = 0; time_step < 800; time_step++)
           {
-            // Move the simulated robot
-            planar_agent.Move(input);
-            ColumnVector realState = planar_agent.GetState();
-            cerr << realState << endl;
             
+            // Move the simulated robot
+            spatial_agent.Move(input);
+            ColumnVector realState = spatial_agent.GetState();
+            cerr << realState << endl;
+          
             // Send real robot pose
-            PublishGroundTruthPose(&planar_agent);
+            PublishGroundTruthPose(&spatial_agent);
 
             // Take a measurement (just use corrupted state, problems in using mobile_robot.measure())
             //ColumnVector measurement = mobile_robot.Measure();
-            ColumnVector measNoise(3); measNoise(1) = RandomNumber(-0.4, 0.4);
+            ColumnVector measNoise(3); measNoise(1) = RandomNumber(-0.2, 0.2);
             measNoise(2) = RandomNumber(-0.2, 0.2); measNoise(3) = RandomNumber(-0.2, 0.2);
             ColumnVector measurement = realState + measNoise;
             
@@ -256,16 +265,17 @@ class ParticleFilterNode
             Pdf<ColumnVector> * posterior = filter->PostGet();
             ColumnVector pose = posterior->ExpectedValueGet();
             SymmetricMatrix poseCov = posterior->CovarianceGet();
-            file_robEst << pose(1) << "," << pose(2) << "," << pose(3) << endl;
-            file_robPos << realState(1) << "," << realState(2) << "," << realState(3) << endl;
-            file_robMeas << measurement(1) << "," << measurement(2) << endl;
+            file_robEst << pose(1) << "," << pose(2) << "," << pose(3) << "," << pose(4) << "," << pose(5) << "," << pose(6) << endl;
+            file_robPos << realState(1) << "," << realState(2) << "," << realState(3) << "," << realState(4) << "," << realState(5) << "," << realState(6) << endl;
+            file_robMeas << measurement(1) << "," << measurement(2) << "," << measurement(3) << endl;
             file_robCov << poseCov(1,1) << "," << poseCov(2,2) << "," << poseCov(2,2) << endl;
 
-            //// Send estimated pose
+            // Send estimated pose to topic
             PublishPose();
 
-            //// Send particles
+            // Send particles to topic
             PublishParticles();
+            
 
             usleep(useconds); // 0.1 seconds sleep
           } 
@@ -307,7 +317,7 @@ class ParticleFilterNode
         ColumnVector sample = (*sample_it).ValueGet();
 
         // Euler to Quaternion
-        float roll = 0, pitch = 0, yaw = sample(3);
+        float roll = sample(4), pitch = sample(5), yaw = sample(6);
         Eigen::Quaternionf q;
         q = Eigen::AngleAxisf(roll, Eigen::Vector3f::UnitX())
             * Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitY())
@@ -316,7 +326,7 @@ class ParticleFilterNode
 
         pose.position.x = sample(1);
         pose.position.y = sample(2);
-        pose.position.z = 0;
+        pose.position.z = sample(3);
         pose.orientation.x = q.coeffs()[0];
         pose.orientation.y = q.coeffs()[1];
         pose.orientation.z = q.coeffs()[2];
@@ -336,7 +346,7 @@ class ParticleFilterNode
         SymmetricMatrix pose_cov = posterior->CovarianceGet();
 
         // Euler to Quaternion
-        float roll = 0, pitch = 0, yaw = pose(3);
+        float roll = pose(4), pitch = pose(5), yaw = pose(6);
         Eigen::Quaternionf q;
         q = Eigen::AngleAxisf(roll, Eigen::Vector3f::UnitX())
             * Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitY())
@@ -349,7 +359,7 @@ class ParticleFilterNode
 
         pose_msg.pose.position.x = pose(1);
         pose_msg.pose.position.y = pose(2);
-        pose_msg.pose.position.z = 0;
+        pose_msg.pose.position.z = pose(3);
         pose_msg.pose.orientation.x = q.coeffs()[0];
         pose_msg.pose.orientation.y = q.coeffs()[1];
         pose_msg.pose.orientation.z = q.coeffs()[2];
@@ -360,23 +370,26 @@ class ParticleFilterNode
 
     // Publishing ground truth pose over ROS
     // Needed only for simulation
-    void PublishGroundTruthPose(PlanarAgent *planar_agent)
+    void PublishGroundTruthPose(SpatialAgent *spatial_agent)
     {
         geometry_msgs::PoseStamped real_pose_msg;
         real_pose_msg.header.stamp = ros::Time::now();
         real_pose_msg.header.frame_id = "/map";
 
         // Euler to Quaternion
-        float roll = 0, pitch = 0, yaw = planar_agent->GetState()[2];
+        float roll, pitch, yaw;
+        roll = spatial_agent->GetState()[3];
+        pitch = spatial_agent->GetState()[4];
+        yaw = spatial_agent->GetState()[5];
         Eigen::Quaternionf q;
         q = Eigen::AngleAxisf(roll, Eigen::Vector3f::UnitX())
             * Eigen::AngleAxisf(pitch, Eigen::Vector3f::UnitY())
             * Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ());
         //cout << "Quaternion" << " " << q.coeffs() << endl;
 
-        real_pose_msg.pose.position.x = planar_agent->GetState()[0];
-        real_pose_msg.pose.position.y = planar_agent->GetState()[1];
-        real_pose_msg.pose.position.z = 0;
+        real_pose_msg.pose.position.x = spatial_agent->GetState()[0];
+        real_pose_msg.pose.position.y = spatial_agent->GetState()[1];
+        real_pose_msg.pose.position.z = spatial_agent->GetState()[2];
         real_pose_msg.pose.orientation.x = q.coeffs()[0];
         real_pose_msg.pose.orientation.y = q.coeffs()[1];
         real_pose_msg.pose.orientation.z = q.coeffs()[2];

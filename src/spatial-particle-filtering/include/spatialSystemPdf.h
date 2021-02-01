@@ -1,8 +1,9 @@
-// Declaration of Motion model for nonlinear planar model (unicycle system)
-// This is the conditional probability density function which relates the actual state to the next state
+// Declaration of Motion model for linear spatial model
+// This is the conditional probability density function which 
+// relates the actual state to the next state
 
-#ifndef __NON_LINEAR_SYSTEM_MOBILE__
-#define __NON_LINEAR_SYSTEM_MOBILE__
+#ifndef __LINEAR_SPATIAL_SYSTEM__
+#define __LINEAR_SPATIAL_SYSTEM__
 
 #include <pdf/conditionalpdf.h>
 #include <pdf/gaussian.h>
@@ -10,14 +11,14 @@
 namespace BFL
 {
     // Nonlinear conditional gaussian pdf
-    class PlanarSystemPdf : public ConditionalPdf<MatrixWrapper::ColumnVector, MatrixWrapper::ColumnVector>
+    class SpatialSystemPdf : public ConditionalPdf<MatrixWrapper::ColumnVector, MatrixWrapper::ColumnVector>
         {
             public:
                 // Constructor
-                PlanarSystemPdf( const Gaussian& additiveNoise);
+                SpatialSystemPdf( const Gaussian& additiveNoise);
 
                 // Destructor
-                virtual ~PlanarSystemPdf();
+                virtual ~SpatialSystemPdf();
 
                 // Method for sampling from the stochastic model
                 virtual bool SampleFrom ( Sample<MatrixWrapper::ColumnVector>& one_sample, int method=DEFAULT, void * args=NULL) const;

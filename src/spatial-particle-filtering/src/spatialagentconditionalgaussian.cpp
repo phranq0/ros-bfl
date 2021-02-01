@@ -2,7 +2,7 @@
 // the planar agent entity
 // The motion model here is linear 
 
-#include "planaragentconditionalgaussian.h"
+#include "spatialagentconditionalgaussian.h"
 #include <wrappers/rng/rng.h> // Wrapper around several rng
                                  // libraries
 #define NUMCONDARGUMENTS_PLANAR_AGENT 2
@@ -12,21 +12,24 @@ namespace BFL
   using namespace MatrixWrapper;
 
 
-  PlanarAgentConditionalGaussian::PlanarAgentConditionalGaussian(const Gaussian& additiveNoise)
+  SpatialAgentConditionalGaussian::SpatialAgentConditionalGaussian(const Gaussian& additiveNoise)
     : AnalyticConditionalGaussianAdditiveNoise(additiveNoise,NUMCONDARGUMENTS_PLANAR_AGENT)
   {
   }
 
 
-  PlanarAgentConditionalGaussian::~PlanarAgentConditionalGaussian(){}
+  SpatialAgentConditionalGaussian::~SpatialAgentConditionalGaussian(){}
 
-  ColumnVector PlanarAgentConditionalGaussian::ExpectedValueGet() const
+  ColumnVector SpatialAgentConditionalGaussian::ExpectedValueGet() const
   {
     ColumnVector state = ConditionalArgumentGet(0);
     ColumnVector vel  = ConditionalArgumentGet(1);
     state(1) += vel(1);
     state(2) += vel(2);
     state(3) += vel(3);
+    state(4) += vel(4);
+    state(5) += vel(5);
+    state(6) += vel(6);
     return state + AdditiveNoiseMuGet();
   }
 
