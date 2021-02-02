@@ -135,13 +135,17 @@ class ParticleFilterNode
       // Construct the measurement noise
       ColumnVector meas_noise_Mu(MEAS_SIZE);
       meas_noise_Mu(1) = MU_MEAS_NOISE;
-      meas_noise_Mu(1) = MU_MEAS_NOISE;
+      meas_noise_Mu(2) = MU_MEAS_NOISE;
+      meas_noise_Mu(3) = MU_MEAS_NOISE;
       SymmetricMatrix meas_noise_Cov(MEAS_SIZE);
+      meas_noise_Cov = 0.0;
       meas_noise_Cov(1,1) = SIGMA_MEAS_NOISE;
       meas_noise_Cov(2,2) = SIGMA_MEAS_NOISE;
+      meas_noise_Cov(3,3) = SIGMA_MEAS_NOISE;
 
       // Create the gaussian distribution
       Gaussian measurement_Uncertainty(meas_noise_Mu, meas_noise_Cov);
+      cerr << measurement_Uncertainty << endl;
 
       // Create the measurement model 
       // P(z(k)|x(k)) 
@@ -216,9 +220,9 @@ class ParticleFilterNode
         // Initialize mobile robot simulation
         SpatialAgent spatial_agent;
         ColumnVector input(6);
-        input(1) = 0;
-        input(2) = 0;
-        input(3) = 0;
+        input(1) = 0.002;
+        input(2) = 0.003;
+        input(3) = 0.004;
         input(4) = 0.0;
         input(5) = 0.0;
         input(6) = 0.0;

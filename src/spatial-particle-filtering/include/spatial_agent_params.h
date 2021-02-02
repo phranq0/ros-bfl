@@ -16,7 +16,7 @@
 // Sizes
 #define STATE_SIZE 6 //state: x,y,z,alpha,beta,gamma
 #define INPUT_SIZE 6 //input: vx,vy,vz,wx,wy,wz
-#define MEAS_SIZE 2  //measurment: x and y from noisy gps-like
+#define MEAS_SIZE 3  //measurment: x, y and z from noisy gps-like
 
 //Initial position and orientation of the mobile robot
 #define X_0 0

@@ -6,7 +6,7 @@
 #include <cmath>
 
 #define MEASMODEL_NUMCONDARGUMENTS_MOBILE 1       // Sensor array size
-#define MEASMODEL_DIMENSION_MOBILE 3              // Measured state size
+#define MEASMODEL_DIMENSION_MOBILE 3             // Measured state size
 
 namespace BFL
 {
@@ -25,6 +25,7 @@ namespace BFL
     {
         // Here z(k) is only conditioned by x(k), not u(k) like in more general model
         ColumnVector state = ConditionalArgumentGet(0);
+        //cerr << measurement << endl;
 
         // Compute expected measurement for the current particle
         ColumnVector expected_measurement(3);
