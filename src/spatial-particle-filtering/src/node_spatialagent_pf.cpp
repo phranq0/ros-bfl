@@ -30,7 +30,7 @@
 #include "stateMeasurementPdf.h"
 #include "spatial_agent.h"
 
-// Angle conversions ecc...
+// Angle representation conversions ecc...
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 #include <cmath>
@@ -51,11 +51,15 @@ class ParticleFilterNode
 {
     // Pubs and Subs 
     ros::NodeHandle nh_;
-    ros::Subscriber navi_sub;
+    ros::Subscriber control_sub;
     ros::Subscriber meas_sub;
+    ros::Subscriber map_sub;
     ros::Publisher pose_pub;
     ros::Publisher particle_pub;
     ros::Publisher ground_truth_pub; 
+    // Data
+    Eigen::Vector3d pos_odom;
+    Eigen::Vector4d quat_odom;
     // Filter components
     SpatialSystemPdf *sys_pdf;
     SystemModel<ColumnVector> *sys_model;
@@ -73,8 +77,9 @@ class ParticleFilterNode
     // Constructor
     ParticleFilterNode()
     {
-       //navi_sub = nh_.subscribe("/dumbTopic", 1, &ParticleFilterNode::InputCb, this);
-       //ranges_sub = nh_.subscribe("/dumbTopic", 1, &ParticleFilterNode::MeasurementCb, this);
+       control_sub = nh_.subscribe("/pose_sim", 1, &ParticleFilterNode::ControlCb, this);
+       //meas_sub = nh_.subscribe("/point_meas", 1, &ParticleFilterNode::MeasurementCb, this);
+       //map_sub = nh_.subscribe("/map_pcl", 1, &ParticleFilterNode::MapCb, this);
        pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/pose_pf",1);
        particle_pub = nh_.advertise<geometry_msgs::PoseArray>("/particle_cloud",1);
        ground_truth_pub = nh_.advertise<geometry_msgs::PoseStamped>("/robot_pose",1);
@@ -83,6 +88,9 @@ class ParticleFilterNode
        sys_model = NULL;
        meas_model = NULL;
        filter = NULL;
+       // Init data
+       pos_odom << 0.0, 0.0, 0.0;
+       quat_odom << 0.0, 0.0, 0.0, 0.0;
        // Filter initialization
        CreateParticleFilter();
    }
@@ -193,12 +201,23 @@ class ParticleFilterNode
     // For interfacing with motion commands and sensors
 
     // Motion callback
-    void InputCb(std_msgs::Float64 msg)
+    void ControlCb(geometry_msgs::Pose msg)
     {
+      Eigen::Vector3d tmp_pos;
+      Eigen::Vector4d tmp_quat;
+      tmp_pos(0) = msg.position.x;
+      tmp_pos(1) = msg.position.y;
+      tmp_pos(2) = msg.position.z;
+      tmp_quat(0) = msg.orientation.x;
+      tmp_quat(1) = msg.orientation.y;
+      tmp_quat(2) = msg.orientation.z;
+      tmp_quat(3) = msg.orientation.w;
+      // TODO Finire con la differenza tra il tmp e quello nella classe,
+      // aggiorno poi quello nella classe con il tmp
       // Here do input command processing, e.g. store inputs from the odometry
       // sensing after a motion step, to pass them to motion model
       // This should run:
-      // filter->Update(sys_model,input);
+      //filter->Update(sys_model,input);
     }
 
     // Measurement callback

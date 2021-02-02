@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package( PCL 1.8 REQUIRED )
 
 # Pkg_config is required for bfl library
 find_package(PkgConfig)
@@ -23,8 +24,13 @@ pkg_check_modules(BFL REQUIRED orocos-bfl)
 message("BFL include dirs:" ${BFL_INCLUDE_DIRS})
 message("BFL library dirs:" ${BFL_LIBRARY_DIRS})
 
+include_directories( ${PCL_INCLUDE_DIRS} )
 include_directories(${BFL_INCLUDE_DIRS}/bfl)
+
+add_definitions(${PCL_DEFINITIONS})
+
 link_directories(${BFL_LIBRARY_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
 link_directories(/opt/ros/melodic/lib)
 
 ###################################
@@ -64,6 +70,7 @@ target_link_libraries(pf_fullstate_3D_agent_node
   ${MATRIX_LIBS} 
   ${RNG_LIBS}  
   ${GINAC_LIBS}
+  ${PCL_LIBRARIES}
   Eigen3::Eigen
 )
 
