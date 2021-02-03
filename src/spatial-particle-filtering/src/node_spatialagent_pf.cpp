@@ -248,12 +248,17 @@ class ParticleFilterNode
       map->width = msg->width;
       map->height = msg->height;
       map->points = msg->points;
-      cerr << map->width << endl;
+      //cerr << map->width << endl;
     }
     
     // Measurement callback
     void MeasurementCb(const PointCloud::ConstPtr& msg)
     {
+      Eigen::Vector3d meas_pt;
+      meas_pt(0) = msg->points[0].x;
+      meas_pt(1) = msg->points[0].y;
+      meas_pt(2) = msg->points[0].z;
+      
       // 1 - Reshape message
       // 2 - Build measurement model taking map into account
       // 3 - Pass measurement (for testing a single point like quadruped paper)
