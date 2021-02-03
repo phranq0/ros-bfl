@@ -68,7 +68,7 @@ class ParticleFilterNode
     // Data
     Eigen::Vector3d pos_odom;
     Eigen::Vector4d quat_odom;
-    PointCloud* map;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr map;
     // Filter components
     SpatialSystemPdf *sys_pdf;
     SystemModel<ColumnVector> *sys_model;
@@ -87,7 +87,7 @@ class ParticleFilterNode
     ParticleFilterNode()
     {
        control_sub = nh_.subscribe("/pose_sim", 1, &ParticleFilterNode::ControlCb, this);
-       //meas_sub = nh_.subscribe("/point_meas", 1, &ParticleFilterNode::MeasurementCb, this);
+       meas_sub = nh_.subscribe("/point_meas", 1, &ParticleFilterNode::MeasurementCb, this);
        map_sub = nh_.subscribe("/map_pcl", 1, &ParticleFilterNode::MapCb, this);
        pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/pose_pf",1);
        particle_pub = nh_.advertise<geometry_msgs::PoseArray>("/particle_cloud",1);
@@ -97,7 +97,7 @@ class ParticleFilterNode
        sys_model = NULL;
        meas_model = NULL;
        filter = NULL;
-       map = NULL;
+       map = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
        // Init data
        pos_odom << 0.0, 0.0, 0.0;
        quat_odom << 0.0, 0.0, 0.0, 0.0;
@@ -203,7 +203,7 @@ class ParticleFilterNode
       filter = new CustomParticleFilter(prior_discr, 0.5, NUM_SAMPLES/4.0);
       
       // Start simulation loop
-      //RunSimulation();
+      // RunSimulation();
     }
     // ----------------------------------------------------------------------
 
@@ -239,17 +239,24 @@ class ParticleFilterNode
     }
 
     // Map callback
-    // Stores the point cloud as class member
     void MapCb(const PointCloud::ConstPtr& msg)
     {
-      printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-      BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
-      printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+      // Debug
+      //printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+      
+      // Store map as member
+      map->width = msg->width;
+      map->height = msg->height;
+      map->points = msg->points;
+      cerr << map->width << endl;
     }
     
     // Measurement callback
-    void MeasurementCb(std_msgs::Float64 msg)
+    void MeasurementCb(const PointCloud::ConstPtr& msg)
     {
+      // 1 - Reshape message
+      // 2 - Build measurement model taking map into account
+      // 3 - Pass measurement (for testing a single point like quadruped paper)
       // Here do measurement processing, like feature extraction from 
       // raw data, each time new data is received
       // This should run :
