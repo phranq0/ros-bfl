@@ -35,9 +35,17 @@
 #include <Eigen/Dense>
 #include <cmath>
 
+// Point cloud
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 using namespace MatrixWrapper;
 using namespace BFL;
 using namespace std;
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 // For measurement noise emulation
 double RandomNumber(double Min, double Max)
@@ -60,6 +68,7 @@ class ParticleFilterNode
     // Data
     Eigen::Vector3d pos_odom;
     Eigen::Vector4d quat_odom;
+    PointCloud* map;
     // Filter components
     SpatialSystemPdf *sys_pdf;
     SystemModel<ColumnVector> *sys_model;
@@ -79,15 +88,16 @@ class ParticleFilterNode
     {
        control_sub = nh_.subscribe("/pose_sim", 1, &ParticleFilterNode::ControlCb, this);
        //meas_sub = nh_.subscribe("/point_meas", 1, &ParticleFilterNode::MeasurementCb, this);
-       //map_sub = nh_.subscribe("/map_pcl", 1, &ParticleFilterNode::MapCb, this);
+       map_sub = nh_.subscribe("/map_pcl", 1, &ParticleFilterNode::MapCb, this);
        pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/pose_pf",1);
        particle_pub = nh_.advertise<geometry_msgs::PoseArray>("/particle_cloud",1);
        ground_truth_pub = nh_.advertise<geometry_msgs::PoseStamped>("/robot_pose",1);
-       dt = 0.0;
+       dt = 0.01;
        // Init filter components
        sys_model = NULL;
        meas_model = NULL;
        filter = NULL;
+       map = NULL;
        // Init data
        pos_odom << 0.0, 0.0, 0.0;
        quat_odom << 0.0, 0.0, 0.0, 0.0;
@@ -193,7 +203,7 @@ class ParticleFilterNode
       filter = new CustomParticleFilter(prior_discr, 0.5, NUM_SAMPLES/4.0);
       
       // Start simulation loop
-      RunSimulation();
+      //RunSimulation();
     }
     // ----------------------------------------------------------------------
 
@@ -201,10 +211,12 @@ class ParticleFilterNode
     // For interfacing with motion commands and sensors
 
     // Motion callback
+    // For now only position and linear velocity of particles
     void ControlCb(geometry_msgs::Pose msg)
     {
       Eigen::Vector3d tmp_pos;
       Eigen::Vector4d tmp_quat;
+      ColumnVector u_hat(3); u_hat = 0.0;
       tmp_pos(0) = msg.position.x;
       tmp_pos(1) = msg.position.y;
       tmp_pos(2) = msg.position.z;
@@ -212,14 +224,29 @@ class ParticleFilterNode
       tmp_quat(1) = msg.orientation.y;
       tmp_quat(2) = msg.orientation.z;
       tmp_quat(3) = msg.orientation.w;
-      // TODO Finire con la differenza tra il tmp e quello nella classe,
-      // aggiorno poi quello nella classe con il tmp
-      // Here do input command processing, e.g. store inputs from the odometry
-      // sensing after a motion step, to pass them to motion model
-      // This should run:
-      //filter->Update(sys_model,input);
+
+      for (int i = 0; i < 3; i++)
+      {
+        // Input estimate
+        u_hat(i+1) = (tmp_pos(i) - pos_odom(i))/dt;
+        // Internal state update
+        pos_odom(i) = tmp_pos(i);
+      }
+
+      filter->Update(sys_model,u_hat);
+      PublishPose();
+      PublishParticles();
     }
 
+    // Map callback
+    // Stores the point cloud as class member
+    void MapCb(const PointCloud::ConstPtr& msg)
+    {
+      printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+      BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
+      printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+    }
+    
     // Measurement callback
     void MeasurementCb(std_msgs::Float64 msg)
     {
