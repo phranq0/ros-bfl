@@ -40,6 +40,7 @@
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/kdtree/kdtree_flann.h>
 
 using namespace MatrixWrapper;
 using namespace BFL;
@@ -258,6 +259,44 @@ class ParticleFilterNode
       meas_pt(0) = msg->points[0].x;
       meas_pt(1) = msg->points[0].y;
       meas_pt(2) = msg->points[0].z;
+
+      // Compute nearest neighbor on map and its distance
+      pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+      kdtree.setInputCloud(map);
+      pcl::PointXYZ target;
+      target.x = meas_pt(0);
+      target.y = meas_pt(1);
+      target.z = meas_pt(2);
+      // K nearest neighbors search
+      int K = 1;
+      std::vector<int> pointIdxNKNSearch(K);
+      std::vector<float> pointNKNSquaredDistance(K);
+      // DEBUG INFO
+      //std::cout << "K nearest neighbor search at (" << target.x 
+      //          << " " << target.y 
+      //          << " " << target.z
+      //          << ") with K=" << K << std::endl;
+      //if ( kdtree.nearestKSearch (target, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+      //{
+      //  for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+      //    std::cout << "    "  <<   (*map)[ pointIdxNKNSearch[i] ].x 
+      //              << " " << (*map)[ pointIdxNKNSearch[i] ].y 
+      //              << " " << (*map)[ pointIdxNKNSearch[i] ].z 
+      //              << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
+      //}
+      ColumnVector measurement(1);
+      if ( kdtree.nearestKSearch (target, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+      {
+        // For now measurement is just the distance between point
+        for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+        {
+            measurement(1) = pointNKNSquaredDistance[i];
+        }
+          // Here compute more refined measurement in case of more points
+      }
+
+      cerr << measurement << endl;
+      // Measurement is the distance itself
       
       // 1 - Reshape message
       // 2 - Build measurement model taking map into account
