@@ -1,26 +1,34 @@
-// Header file which defines nonlinear probability density function (aka Measurement Model)
-// related to a point-shaped mobile robot, which is a conditional probability density 
-// defined as P(z(k)|x(k))
-// This model makes a direct confrontation on the state, 
-// computes the distance between measurement and (x,y) of each particle
+// Header file which defines conditional probability density function (measurement model)
+// related to a point-shaped mobile robot defined as P(z(k)|x(k))
+// This relies on a map given as point cloud, the confrontation is done 
+// between measured distance from nearest neighbor and predicted distance from
+// each particle to its nearest neighbor
 
-#ifndef __STATE_MEAS_MOBILE__
-#define __STATE_MEAS_MOBILE__
+#ifndef __PCL_MEAS_MOBILE__
+#define __PCL_MEAS_MOBILE__
 
 #include <pdf/conditionalpdf.h>
 #include <pdf/gaussian.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/kdtree/kdtree_flann.h>
+
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 namespace BFL
 {
     // Non linear conditional gaussian, inherited from general conditional pdf
-    class stateMeasurementPdf : public ConditionalPdf<MatrixWrapper::ColumnVector, MatrixWrapper::ColumnVector>
+    class pclMeasurementPdf : public ConditionalPdf<MatrixWrapper::ColumnVector, MatrixWrapper::ColumnVector>
         {
             public:
+                pcl::PointCloud<pcl::PointXYZ>::Ptr _map;
                 // Constructor
-                stateMeasurementPdf(const Gaussian& measNoise);
+                pclMeasurementPdf(const Gaussian& measNoise, const PointCloud::ConstPtr& map);
 
                 // Destructor 
-                virtual ~stateMeasurementPdf();
+                virtual ~pclMeasurementPdf();
 
                 // This gets the measurement model, the P(z(k)|x(k))
                 virtual Probability ProbabilityGet(const MatrixWrapper::ColumnVector& measurement) const;

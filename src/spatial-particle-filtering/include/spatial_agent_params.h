@@ -40,8 +40,8 @@
 #define PRIOR_MU_GAMMA M_PI/4
 
 // Initial covariances of position and orientation
-#define PRIOR_COV_X pow(0.3,2)
-#define PRIOR_COV_Y pow(0.3,2)
+#define PRIOR_COV_X pow(0.6,2)
+#define PRIOR_COV_Y pow(0.6,2)
 #define PRIOR_COV_Z pow(0.3,2)
 #define PRIOR_COV_ALPHA pow(M_PI/8,2)
 #define PRIOR_COV_BETA pow(M_PI/8,2)

@@ -27,7 +27,8 @@
 // Custom Bfl components
 #include "spatial_agent_params.h"
 #include "spatialSystemPdf.h"
-#include "stateMeasurementPdf.h"
+//#include "stateMeasurementPdf.h"
+#include "pclMeasurementPdf.h"
 #include "spatial_agent.h"
 
 // Angle representation conversions ecc...
@@ -73,7 +74,8 @@ class ParticleFilterNode
     // Filter components
     SpatialSystemPdf *sys_pdf;
     SystemModel<ColumnVector> *sys_model;
-    stateMeasurementPdf *meas_pdf;
+    //stateMeasurementPdf *meas_pdf;
+    pclMeasurementPdf *meas_pdf;
     MeasurementModel<ColumnVector,ColumnVector> *meas_model;
     // Particles
     MCPdf<ColumnVector> *prior_discr;
@@ -82,12 +84,13 @@ class ParticleFilterNode
     // Timing
     ros::Time prevNavDataTime;
     double dt;
+    bool hasFilter;
 
   public:
     // Constructor
     ParticleFilterNode()
     {
-       control_sub = nh_.subscribe("/pose_sim", 1, &ParticleFilterNode::ControlCb, this);
+       //control_sub = nh_.subscribe("/pose_sim", 1, &ParticleFilterNode::ControlCb, this);
        meas_sub = nh_.subscribe("/point_meas", 1, &ParticleFilterNode::MeasurementCb, this);
        map_sub = nh_.subscribe("/map_pcl", 1, &ParticleFilterNode::MapCb, this);
        pose_pub = nh_.advertise<geometry_msgs::PoseStamped>("/pose_pf",1);
@@ -102,8 +105,10 @@ class ParticleFilterNode
        // Init data
        pos_odom << 0.0, 0.0, 0.0;
        quat_odom << 0.0, 0.0, 0.0, 0.0;
-       // Filter initialization
-       CreateParticleFilter();
+       hasFilter = false;
+
+       // When not using map
+       // CreateParticleFilter();
    }
 
    // Destructor
@@ -168,7 +173,8 @@ class ParticleFilterNode
 
       // Create the measurement model 
       // P(z(k)|x(k)) 
-      meas_pdf = new stateMeasurementPdf(measurement_Uncertainty);
+      meas_pdf = new pclMeasurementPdf(measurement_Uncertainty, map);
+      //meas_pdf = new stateMeasurementPdf(measurement_Uncertainty);
       meas_model = new MeasurementModel<ColumnVector,ColumnVector>(meas_pdf);
 
       // ------------------------------------------------ Prior Density
@@ -225,7 +231,6 @@ class ParticleFilterNode
       tmp_quat(1) = msg.orientation.y;
       tmp_quat(2) = msg.orientation.z;
       tmp_quat(3) = msg.orientation.w;
-
       for (int i = 0; i < 3; i++)
       {
         // Input estimate
@@ -250,9 +255,18 @@ class ParticleFilterNode
       map->height = msg->height;
       map->points = msg->points;
       //cerr << map->width << endl;
+
+      if(hasFilter == false)
+      {
+        // Filter initialization
+        CreateParticleFilter();
+        hasFilter = true;
+      }
     }
     
     // Measurement callback
+    // Here do measurement processing, like feature extraction from 
+    // raw data, each time new data is received
     void MeasurementCb(const PointCloud::ConstPtr& msg)
     {
       Eigen::Vector3d meas_pt;
@@ -292,21 +306,13 @@ class ParticleFilterNode
         {
             measurement(1) = pointNKNSquaredDistance[i];
         }
-          // Here compute more refined measurement in case of more points
       }
 
-      cerr << measurement << endl;
-      // Measurement is the distance itself
-      
-      // 1 - Reshape message
-      // 2 - Build measurement model taking map into account
-      // 3 - Pass measurement (for testing a single point like quadruped paper)
-      // Here do measurement processing, like feature extraction from 
-      // raw data, each time new data is received
-      // This should run :
-      // filter->Update(meas_model, measurement);
-      // PublishParticles();
-      // PublishPose();
+      //cerr << "Real measurement: " << measurement << endl;
+      cerr << endl;
+      filter->Update(meas_model, measurement);
+      PublishParticles();
+      PublishPose();
     }
 
     // -----------------------------------------------------------------------

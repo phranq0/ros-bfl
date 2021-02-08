@@ -61,7 +61,8 @@ include_directories(
 )
 
 # Executables
-add_executable(pf_fullstate_3D_agent_node src/node_spatialagent_pf.cpp src/spatialSystemPdf.cpp src/stateMeasurementPdf.cpp src/spatial_agent.cpp src/spatialagentconditionalgaussian.cpp src/customParticleFilter.cpp)
+#add_executable(pf_fullstate_3D_agent_node src/node_spatialagent_pf.cpp src/spatialSystemPdf.cpp src/stateMeasurementPdf.cpp src/spatial_agent.cpp src/spatialagentconditionalgaussian.cpp src/customParticleFilter.cpp)
+add_executable(pf_fullstate_3D_agent_node src/node_spatialagent_pf.cpp src/spatialSystemPdf.cpp src/pclMeasurementPdf.cpp src/spatial_agent.cpp src/spatialagentconditionalgaussian.cpp src/customParticleFilter.cpp)
 
 # Libraries to be linked to executables
 target_link_libraries(pf_fullstate_3D_agent_node
