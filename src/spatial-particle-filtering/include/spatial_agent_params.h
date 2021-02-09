@@ -16,7 +16,7 @@
 // Sizes
 #define STATE_SIZE 6 //state: x,y,z,alpha,beta,gamma
 #define INPUT_SIZE 6 //input: vx,vy,vz,wx,wy,wz
-#define MEAS_SIZE 3  //measurment: x, y and z from noisy gps-like
+#define MEAS_SIZE 3  //measurment: distance from a point in space
 
 //Initial position and orientation of the mobile robot
 #define X_0 0
@@ -26,7 +26,7 @@
 #define BETA_0  0
 #define GAMMA_0  0
 
-#define NUM_SAMPLES 1000 // Default Number of Samples (Particles)
+#define NUM_SAMPLES 500 // Default Number of Samples (Particles)
 #define RESAMPLE_PERIOD 0 // Default Resample Period
 #define RESAMPLE_THRESHOLD (NUM_SAMPLES/4.0) // Threshold for Dynamic Resampling
 

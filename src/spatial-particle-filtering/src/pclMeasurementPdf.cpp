@@ -13,7 +13,7 @@
 #include <Eigen/Dense>
 
 #define MEASMODEL_NUMCONDARGUMENTS_MOBILE 1       // Sensor array size
-#define MEASMODEL_DIMENSION_MOBILE 3             // Measured state size
+#define MEASMODEL_DIMENSION_MOBILE 3            // Measured state size
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
@@ -63,23 +63,47 @@ namespace BFL
         int K = 1;
         std::vector<int> pointIdxNKNSearch(K);
         std::vector<float> pointNKNSquaredDistance(K);
-        ColumnVector exp_meas(K);
+        ColumnVector nn_point(3);
+        ColumnVector expected_measurement(3);
         if ( kdtree.nearestKSearch (target, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
         {
           // For now measurement is just the distance between point
           for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
             {
-                //cerr << "Qui" << endl;
-                exp_meas(i+1) = pointNKNSquaredDistance[i];
+                //exp_meas(i+1) = pointNKNSquaredDistance[i];
+                nn_point(1) = (*_map)[ pointIdxNKNSearch[i] ].x;
+                nn_point(2) = (*_map)[ pointIdxNKNSearch[i] ].y;
+                nn_point(3) = (*_map)[ pointIdxNKNSearch[i] ].z;
             }
-            cerr << exp_meas << endl;
         }
+//
+        ColumnVector lin_state(3); lin_state(1) = state(1); lin_state(2) = state(2); lin_state(3) = state(3);
+        expected_measurement = lin_state - nn_point;
+//
         // Compute expected measurement for the current particle
-        ColumnVector distance(1);
+        ColumnVector distance(3);
 
         // Compute distance between simulated and real measurements
-        distance = exp_meas - measurement;
-        //cerr << "Predicted Measurement: " << distance << endl;
+        distance = expected_measurement - measurement;
+        cerr << "Predicted Measurement: " << distance << endl;
+        // ----------------------------------------- DEBUG -------------------------------------------------
+        // OK
+        // ColumnVector contact_point(3); contact_point(1) = 0.1; contact_point(2) = 0.15; contact_point(3) = 0.18;
+        // ColumnVector nn_point(3); nn_point(1) = 0.4; nn_point(2) = 0.3; nn_point(3) = 0.22; 
+        // ColumnVector real_meas(3); 
+        // real_meas(1) = abs(contact_point(1) - nn_point(1)); 
+        // real_meas(2) = abs(contact_point(2) - nn_point(2));  
+        // real_meas(3) = abs(contact_point(3) - nn_point(3));
+        // ColumnVector expected_meas(3); expected_meas(1) = state(1); expected_meas(2) = state(2); expected_meas(3) = state(3); 
+        // ColumnVector distance(3);
+        // distance = expected_meas - real_meas;
+        // Scalar distance 
+        //ColumnVector real_meas(1);  real_meas = 0.07;
+        //ColumnVector expected_meas(1); expected_meas = state(3);
+        //ColumnVector distance(1);
+        //distance = expected_meas - real_meas;
+
+        // -------------------------------------------------------------------------------------------------
         
         // Computes the likelihood of the measurement by sampling
         // the probability of (em-m) in the noise distribution

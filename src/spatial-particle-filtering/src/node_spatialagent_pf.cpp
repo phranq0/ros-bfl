@@ -269,18 +269,20 @@ class ParticleFilterNode
     // raw data, each time new data is received
     void MeasurementCb(const PointCloud::ConstPtr& msg)
     {
-      Eigen::Vector3d meas_pt;
-      meas_pt(0) = msg->points[0].x;
-      meas_pt(1) = msg->points[0].y;
-      meas_pt(2) = msg->points[0].z;
-
+      ColumnVector meas_pt(3);
+      meas_pt(1) = msg->points[0].x;
+      meas_pt(2) = msg->points[0].y;
+      meas_pt(3) = msg->points[0].z;
+      //cerr << endl;
+      //cerr << "Real measurement: " << meas_pt << endl;
+      
       // Compute nearest neighbor on map and its distance
       pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
       kdtree.setInputCloud(map);
       pcl::PointXYZ target;
-      target.x = meas_pt(0);
-      target.y = meas_pt(1);
-      target.z = meas_pt(2);
+      target.x = meas_pt(1);
+      target.y = meas_pt(2);
+      target.z = meas_pt(3);
       // K nearest neighbors search
       int K = 1;
       std::vector<int> pointIdxNKNSearch(K);
@@ -298,19 +300,29 @@ class ParticleFilterNode
       //              << " " << (*map)[ pointIdxNKNSearch[i] ].z 
       //              << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
       //}
-      ColumnVector measurement(1);
+      ColumnVector nn_point(3);
+      ColumnVector measurement(3);
       if ( kdtree.nearestKSearch (target, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
       {
         // For now measurement is just the distance between point
         for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
         {
-            measurement(1) = pointNKNSquaredDistance[i];
+            //measurement(1) = pointNKNSquaredDistance[i];
+            nn_point(1) = (*map)[ pointIdxNKNSearch[i] ].x;
+            nn_point(2) = (*map)[ pointIdxNKNSearch[i] ].y;
+            nn_point(3) = (*map)[ pointIdxNKNSearch[i] ].z;
         }
       }
 
-      //cerr << "Real measurement: " << measurement << endl;
-      cerr << endl;
+      // Measurement is a distance
+      measurement = meas_pt - nn_point;
+      //cerr << "Nearest Neighbor: " << nn_point << endl;
+      //cerr << "Measurement: " << measurement << endl;
+
       filter->Update(meas_model, measurement);
+      Pdf<ColumnVector> * posterior = filter->PostGet();
+      ColumnVector pose = posterior->ExpectedValueGet();
+      //cerr << "Estimated point: " << pose << endl;
       PublishParticles();
       PublishPose();
     }
@@ -510,7 +522,7 @@ class ParticleFilterNode
     
 int main(int argc, char** argv)
 {
-  cerr << "ROS - Basic Particle Filter testing" << endl;
+  cerr << "ROS - Particle Filter testing" << endl;
   ros::init(argc, argv, "ParticleFilterNode");
   ParticleFilterNode pfNode;
   ros::spin();
